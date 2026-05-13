@@ -4,7 +4,7 @@
 Failures and exception of SMT.
 *)
 
-signature FLATBELLE_SMT_FAILURE =
+signature MCHAMMER_SMT_FAILURE =
 sig
   datatype failure =
     Counterexample of bool |
@@ -16,7 +16,7 @@ sig
   exception SMT of failure
 end;
 
-structure Flatbelle_SMT_Failure: FLATBELLE_SMT_FAILURE =
+structure MCHammer_SMT_Failure: MCHAMMER_SMT_FAILURE =
 struct
 
 datatype failure =

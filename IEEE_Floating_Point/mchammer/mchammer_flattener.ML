@@ -4,12 +4,12 @@
 
 *)
 
-signature FLATBELLE_FLATTENER =
+signature MCHAMMER_FLATTENER =
 sig
   type atp_failure = ATP_Proof.atp_failure
   type stature = ATP_Problem_Generate.stature
   type type_enc = ATP_Problem_Generate.type_enc
-  type fact = Flatbelle_Fact.fact
+  type fact = MCHammer_Fact.fact
 
   datatype mode = Auto_Try | Try | Normal | Minimize | MaSh
 
@@ -39,26 +39,26 @@ sig
   type flattener_result =
     {outcome : atp_failure option,
      used_facts : (string * stature) list,
-     used_from : Flatbelle_Fact.fact list}
+     used_from : MCHammer_Fact.fact list}
   
   type flattener = params -> flattener_problem -> flattener_result
 
   val overlord_file_location_of_flattener : string -> string * string
 end;
 
-structure Flatbelle_Flattener : FLATBELLE_FLATTENER =
+structure MCHammer_Flattener : MCHAMMER_FLATTENER =
 struct
 type atp_failure = ATP_Proof.atp_failure
 type stature = ATP_Problem_Generate.stature
 type type_enc = ATP_Problem_Generate.type_enc
 
-type fact = Flatbelle_Fact.fact
+type fact = MCHammer_Fact.fact
 
 datatype mode = Auto_Try | Try | Normal | Minimize | MaSh
 
 datatype induction_rules = Include | Exclude | Instantiate
 fun maybe_filter_out_induction_rules induction_rules : fact list -> fact list = 
-  raise Flatbelle_Util.TODO "TODO: Flatbelle_Flattener.maybe_filter_out_induction_rules"
+  raise MCHammer_Util.TODO "TODO: MCHammer_Flattener.maybe_filter_out_induction_rules"
 
 type params =
   {debug : bool,
@@ -83,7 +83,7 @@ type flattener_problem =
 type flattener_result =
   {outcome : atp_failure option,
    used_facts : (string * stature) list,
-   used_from : Flatbelle_Fact.fact list}
+   used_from : MCHammer_Fact.fact list}
 
 type flattener = params -> flattener_problem -> flattener_result
    

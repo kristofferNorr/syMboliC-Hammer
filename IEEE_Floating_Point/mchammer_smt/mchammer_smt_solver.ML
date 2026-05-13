@@ -4,7 +4,7 @@
 
 *)
 
-signature FLATBELLE_SMT_SOLVER =
+signature MCHAMMER_SMT_SOLVER =
 sig
   (* configuration *)
   datatype outcome = Unsat | Sat | Unknown | Time_Out
@@ -15,7 +15,7 @@ sig
   
   type solver_config = {
     name: string,
-    class: Proof.context -> Flatbelle_SMT_Util.class,
+    class: Proof.context -> MCHammer_SMT_Util.class,
     available: unit -> bool,
     command: unit -> string list,
     options: Proof.context -> string list,
@@ -27,7 +27,7 @@ sig
   (* registry *)
   val add_solver: {dummy: bool, solver_default: bool} -> solver_config -> theory -> theory
   (* filter *)
-  val flatbelle_smt_filter : Proof.context -> thm -> 
+  val mchammer_smt_filter : Proof.context -> thm -> 
     ((string * ATP_Problem_Generate.stature) * thm) list -> int -> string list -> parsed_proof
    
   (* tactic *)
@@ -41,13 +41,13 @@ sig
 
 end;
 
-structure Flatbelle_SMT_Solver : FLATBELLE_SMT_SOLVER =
+structure MCHammer_SMT_Solver : MCHAMMER_SMT_SOLVER =
 struct
 
 (* interface to external solvers *)
 local
   fun run ctxt name input = 
-  (case Config.get ctxt Flatbelle_SMT_Config.problem_dest_file of
+  (case Config.get ctxt MCHammer_SMT_Config.problem_dest_file of
     "" => ()
   | path => 
     let val in_path = Path.ext "smt_in" (Path.explode path) in
@@ -56,7 +56,7 @@ local
     end)
 in
 
-fun run_solver ctxt name cmd input = Flatbelle_Util.TODO "run_solver"
+fun run_solver ctxt name cmd input = MCHammer_Util.TODO "run_solver"
 
 (* Here we will invoke SMT translation plus other stuff*)
 fun invoke name command options smt_options ithms ctxt =
@@ -64,7 +64,7 @@ fun invoke name command options smt_options ithms ctxt =
     val comments = [implode_space options]
     val input = 
       ithms
-      |> Flatbelle_SMT_Translate.translate ctxt name smt_options comments
+      |> MCHammer_SMT_Translate.translate ctxt name smt_options comments
   in
     run ctxt name ("; As of now it is a bit unclear how exactly a correct SMT-LIB 3 model is formatted.\n" ^
                    "; Hence, this will be corrected once the standard is released.\n"^ input)
@@ -81,7 +81,7 @@ type parsed_proof = { (*TODO: integrate it later on in the project.*)
 
 type solver_config = {
   name: string,
-  class: Proof.context -> Flatbelle_SMT_Util.class,
+  class: Proof.context -> MCHammer_SMT_Util.class,
   available: unit -> bool,
   command: unit -> string list,
   options: Proof.context -> string list,
@@ -92,14 +92,12 @@ type solver_config = {
 
 
 (* check well-sortedness *)
-\<comment> \<open> This was a copy and pasted from smt_solver.ML\<close>
 val has_topsort = Term.exists_type (Term.exists_subtype (fn
     TFree (_, []) => true
   | TVar (_, []) => true
   | _ => false))
 
 (* top sorts cause problems with atomization *)
-\<comment> \<open> This was a copy and pasted from smt_solver.ML\<close>
 fun check_topsort ctxt thm =
   if has_topsort (Thm.prop_of thm) then (writeln("TODO: message about assumptions dropped."); TrueI) else thm
 
@@ -121,25 +119,25 @@ structure Flatteners = Generic_Data
 fun add_solver {dummy: bool, solver_default: bool} 
       ({name, class, available, command, options, smt_options, outcome,...} : solver_config) =
   let 
-    val info = {name = name, dummy = dummy, flatbelle_default = solver_default,
+    val info = {name = name, dummy = dummy, mchammer_default = solver_default,
       class = class, available = available, options = options}
     val solver_info = {command = fn () => ["dummy", "commands"], smt_options=smt_options, parse_proof = (), replay = ()}
   in
     Context.theory_map (Flatteners.map (Symtab.update_new (name, solver_info))) #>
-    Context.theory_map (Flatbelle_SMT_Config.select_solver name) #> (* this (or similar) should be in systems when defining smt methods *)
-    Context.theory_map (Flatbelle_SMT_Config.add_solver info)
+    Context.theory_map (MCHammer_SMT_Config.select_solver name) #> (* this (or similar) should be in systems when defining smt methods *)
+    Context.theory_map (MCHammer_SMT_Config.add_solver info)
   end
 
 fun get_info ctxt name = the (Symtab.lookup (Flatteners.get (Context.Proof ctxt)) name);
 
 fun name_and_info_of ctxt = 
-  let val name = Flatbelle_SMT_Config.solver_of ctxt 
+  let val name = MCHammer_SMT_Config.solver_of ctxt 
   in (name, get_info ctxt name) end
 
 
-(* filter (for flatbelle) *)
+(* filter (for mchammer) *)
 
-fun flatbelle_smt_filter ctxt goal xfacts i options =
+fun mchammer_smt_filter ctxt goal xfacts i options =
   let
     val ({context = ctxt, prems, concl, ...}, _) = Subgoal.focus ctxt i NONE goal
     
@@ -151,13 +149,13 @@ fun flatbelle_smt_filter ctxt goal xfacts i options =
 
     val conjecture = Thm.assume cprop
        
-    (* has type ((int * Flatbelle_SMT_Util.role) thm) list, list of indexed theorems, representing assumptions and goals to be translated.*)
+    (* has type ((int * MCHammer_SMT_Util.role) thm) list, list of indexed theorems, representing assumptions and goals to be translated.*)
     val conjecture = Thm.assume cprop
-    val thms = (Flatbelle_SMT_Util.Conjecture, conjecture) :: 
-          map (pair Flatbelle_SMT_Util.Hypothesis) prems @
-          map (pair Flatbelle_SMT_Util.Axiom o snd) xfacts
+    val thms = (MCHammer_SMT_Util.Conjecture, conjecture) :: 
+          map (pair MCHammer_SMT_Util.Hypothesis) prems @
+          map (pair MCHammer_SMT_Util.Axiom o snd) xfacts
           |> map (apsnd (check_topsort ctxt))
-    val ithms = Flatbelle_SMT_Normalize.normalize ctxt thms
+    val ithms = MCHammer_SMT_Normalize.normalize ctxt thms
     val (name, {command, smt_options, parse_proof, ...}) = name_and_info_of ctxt
     val invoked = invoke name command options smt_options ithms ctxt
   in

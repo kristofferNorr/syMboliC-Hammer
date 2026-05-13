@@ -1,15 +1,15 @@
 (*  Title:      
     Author:     
 
-Mirabelle action: "flatbelle".
+Mirabelle action: "mchammer".
 *)
 
-structure Mirabelle_Flatbelle: MIRABELLE_ACTION =
+structure Mirabelle_MCHammer: MIRABELLE_ACTION =
 struct
 
 val check_trivialK = "check_trivial" (*=BOOL: check if goals are "trivial"*)
 val exhaustive_preplayK = "exhaustive_preplay" (*=BOOL: show exhaustive preplay data*)
-val keep_probsK = "keep_probs" (*=BOOL: keep temporary problem files created by flatbelle*)
+val keep_probsK = "keep_probs" (*=BOOL: keep temporary problem files created by mchammer*)
 val keep_proofsK = "keep_proofs" (*=BOOL: keep temporary proof files created by ATPs*)
 
 
@@ -31,20 +31,20 @@ fun run_sh params keep pos state =
             StringCvt.padLeft #"0" 6 (str0 (Position.offset_of pos))
           fun mk_smt_file () = dir ^ "/" ^ file_name ^ "__" ^ serial_string ()
         in
-          keep_probs ? Config.put Flatbelle_SMT_Config.problem_dest_file (mk_smt_file ())
+          keep_probs ? Config.put MCHammer_SMT_Config.problem_dest_file (mk_smt_file ())
         end
         | set_file_name NONE = I
      val state' = state |> Proof.map_context (set_file_name keep)
 
-     val ((_, (flatbelle_outcome, msg)), cpu_time) = Mirabelle.cpu_time (fn () =>
-       Flatbelle.flatbelle_run params Flatbelle_Flattener.Normal NONE 1 state') ()
+     val ((_, (mchammer_outcome, msg)), cpu_time) = Mirabelle.cpu_time (fn () =>
+       MCHammer.mchammer_run params MCHammer_Flattener.Normal NONE 1 state') ()
     in
-      (flatbelle_outcome, msg, cpu_time)
+      (mchammer_outcome, msg, cpu_time)
     end
-    catch ERROR msg => (Flatbelle.SH_Unknown, "error: ", 0)
+    catch ERROR msg => (MCHammer.SH_Unknown, "error: ", 0)
 \<close>
 
-fun flatbelle_run params output_dir keep_probs keep_proofs thy_index pos pre =
+fun mchammer_run params output_dir keep_probs keep_proofs thy_index pos pre =
   let 
     val keep =
       if keep_probs orelse keep_proofs then
@@ -60,10 +60,10 @@ fun flatbelle_run params output_dir keep_probs keep_proofs thy_index pos pre =
           |> (fn dir => SOME (dir, keep_probs, keep_proofs))
         end
       else NONE
-    val (flatbelle_outcome, msg, cpu_time) = run_sh params keep pos pre
+    val (mchammer_outcome, msg, cpu_time) = run_sh params keep pos pre
     val outcome_msg = "FIXME: (SH " ^ string_of_int cpu_time ^ " ms ...) "
   in 
-    (flatbelle_outcome, outcome_msg ^ Protocol_Message.clean_output msg) 
+    (mchammer_outcome, outcome_msg ^ Protocol_Message.clean_output msg) 
   end          
 
 fun make_action ({arguments: Properties.T, timeout, output_dir, label, name,...}: Mirabelle.action_context) =
@@ -79,13 +79,13 @@ fun make_action ({arguments: Properties.T, timeout, output_dir, label, name,...}
           ""
         else
           let
-            val params = Flatbelle_Commands.default_params (Proof.context_of pre) arguments 
+            val params = MCHammer_Commands.default_params (Proof.context_of pre) arguments 
             val (outcome, log) = 
-              flatbelle_run params output_dir keep_probs keep_proofs theory_index pos pre
+              mchammer_run params output_dir keep_probs keep_proofs theory_index pos pre
           in
             log 
             |> Symbol.trim_blanks
-            |> prefix_lines (Flatbelle.short_string_of_flatbelle_outcome outcome ^ " ")
+            |> prefix_lines (MCHammer.short_string_of_mchammer_outcome outcome ^ " ")
           end
         end
   in (init_msg , {run = run, finalize = K "TODO"}) end

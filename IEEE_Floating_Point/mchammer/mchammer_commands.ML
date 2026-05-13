@@ -4,18 +4,18 @@
 
 *)
 
-signature FLATBELLE_COMMANDS =
+signature MCHAMMER_COMMANDS =
 sig
-  type params = Flatbelle_Flattener.params
+  type params = MCHammer_Flattener.params
 
   val default_params : Proof.context -> (string * string) list -> params
 end;
 
-structure Flatbelle_Commands : FLATBELLE_COMMANDS =
+structure MCHammer_Commands : MCHAMMER_COMMANDS =
 struct
 
 val flatN = "flattening"
-type params = Flatbelle_Flattener.params
+type params = MCHammer_Flattener.params
 
 
 (*** parameters ***)
@@ -61,7 +61,7 @@ fun extract_params mode default_params override_params =
     
     fun general_lookup_bool option default_value name =
       (case lookup name of
-        SOME s => Flatbelle_Util.parse_bool_option option name s 
+        SOME s => MCHammer_Util.parse_bool_option option name s 
       | NONE => default_value)
     fun lookup_option lookup' name = 
       (case lookup name of
@@ -77,10 +77,10 @@ fun extract_params mode default_params override_params =
       
     val lookup_bool = the o general_lookup_bool false (SOME false)
     
-    val debug = mode <> Flatbelle_Flattener.Auto_Try andalso lookup_bool "debug"
-    val verbose = debug orelse (mode <>  Flatbelle_Flattener.Auto_Try andalso lookup_bool "verbose")
+    val debug = mode <> MCHammer_Flattener.Auto_Try andalso lookup_bool "debug"
+    val verbose = debug orelse (mode <>  MCHammer_Flattener.Auto_Try andalso lookup_bool "verbose")
     val type_enc = 
-      if mode = Flatbelle_Flattener.Auto_Try then
+      if mode = MCHammer_Flattener.Auto_Try then
         NONE
       else
         (case lookup_string "type_enc" of
@@ -94,7 +94,7 @@ fun extract_params mode default_params override_params =
     val flatteners = [] (*TODO: add standarnd way to listing flatterns (provers) that will be used*)
     val induction_rules = NONE
     val max_facts = lookup_option lookup_int "max_facts"
-    val slices = if mode = Flatbelle_Flattener.Auto_Try then 1 else Int.max (1, lookup_int "slices")
+    val slices = if mode = MCHammer_Flattener.Auto_Try then 1 else Int.max (1, lookup_int "slices")
   in
     {debug = debug, verbose = verbose, overlord = overlord,
      file_name = file_name, file_path = file_path, 
@@ -104,7 +104,7 @@ fun extract_params mode default_params override_params =
   end
 
 fun get_params mode = extract_params mode o default_raw_params
-fun default_params ctxt = get_params Flatbelle_Flattener.Normal ctxt o map (apsnd single)
+fun default_params ctxt = get_params MCHammer_Flattener.Normal ctxt o map (apsnd single)
 
 (* Flattening things  *)
 val silence_state =
@@ -116,9 +116,9 @@ fun flattening override_params writeln_result subcommand state0 =
     val thy = Proof.theory_of state
     val ctxt = Proof.context_of state    
     val {goal=goal, facts=facts,...} = Proof.goal state                        
-    val params  = get_params Flatbelle_Flattener.Normal ctxt override_params
+    val params  = get_params MCHammer_Flattener.Normal ctxt override_params
   in
-    ignore (Flatbelle.flatbelle_run params Flatbelle_Flattener.Normal writeln_result  1 state)
+    ignore (MCHammer.mchammer_run params MCHammer_Flattener.Normal writeln_result  1 state)
   end
 
 (* Parsing and command setup  *)

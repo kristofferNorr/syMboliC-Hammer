@@ -4,7 +4,7 @@
 General utility functions. More or less a copy of SMT_Util in HOL/Tools/SMT/smt_util.ML.
 *)
 
-signature FLATBELLE_SMT_UTIL =
+signature MCHAMMER_SMT_UTIL =
 sig
   (*basic combinators*)
   val repeat: ('a -> 'a option) -> 'a -> 'a
@@ -45,10 +45,10 @@ sig
 
 end;
 
-structure Flatbelle_SMT_Util: FLATBELLE_SMT_UTIL =
+structure MCHammer_SMT_Util: MCHAMMER_SMT_UTIL =
 struct
 (* TODO error*)
-fun ftodo func = error "Flatbelle_SMT_Util - TODO: " ^ func
+fun ftodo func = error "MCHammer_SMT_Util - TODO: " ^ func
 
 
 (* basic combinators *)

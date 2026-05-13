@@ -1,4 +1,4 @@
-(*  Title:      IEEE_Floating_Point/flatbelle_smt_float.ML
+(*  Title:      IEEE_Floating_Point/mchammer_smt_float.ML
     Author:     Olle Torstensson, Uppsala University
     Author:     Tjark Weber, Uppsala University
     Author:     Kristoffer Norrman, Uppsala University
@@ -11,7 +11,7 @@ SMT setup for floating-points.
 
 This file provides an interpretation of floating-point related types and constants found in
 IEEE_Floating_Point/IEEE_Single_NaN.thy into SMT-LIB. The interpretation encompasses
-  - fixed format floating-point types,
+  - symbolic format floating-point types,
   - the rounding mode type,
   - floating-point value construction from bit vector triples,
   - special floating-point values (+/- 0, +/- infinity, and NaN),
@@ -27,7 +27,7 @@ floating-point type will in general need to be attached with explicit type const
 trigger the interpretation.
 *)
 
-structure Flatbelle_SMT_Float: sig end =
+structure MCHammer_SMT_Float: sig end =
 struct
 
 (*Determine whether a type is a word type of a fixed format supported by SMT-LIB.*)
@@ -41,11 +41,11 @@ fun is_float (Type (\<^type_name>\<open>IEEE_Single_NaN.floatSingleNaN\<close>, 
 
 fun is_numeral n =  can Word_Lib.dest_binT n andalso Word_Lib.dest_binT n > 1
 
-(*Extract type argument from word types of fixed formats.*)
+(*Extract type argument from word types of all formats.*)
 
 fun word_Targ (Type (\<^type_name>\<open>Word.word\<close>, [a])) =
       let
-        fun conv (s, T) = Flatbelle_SMT_Builtin.Term (Free (s, T))
+        fun conv (s, T) = MCHammer_SMT_Builtin.Term (Free (s, T))
         fun transT (T as TFree _) = Term.dest_TFree T ||> (fn (_) => \<^typ>\<open>int\<close>) |> conv
           | transT (T as Type _) = raise TYPE ("Can we have typ.Type as type arg?", [T], [])
           | transT (T as TVar _) = raise TYPE ("Can we have typ.TVar as type arg?", [T], [])
@@ -54,13 +54,13 @@ fun word_Targ (Type (\<^type_name>\<open>Word.word\<close>, [a])) =
       end
   | word_Targ _ = NONE
 
-(*Extract type arguments from floating-point types of fixed formats.*)
+(*Extract type arguments from floating-point types of all formats.*)
 fun float_Targs (Type (\<^type_name>\<open>IEEE_Single_NaN.floatSingleNaN\<close>, [e,f])) =
       let
         fun conv n (s, T) = 
               (case n of
-                0 => Flatbelle_SMT_Builtin.Term (Free (s, T))
-              | _ => Flatbelle_SMT_Builtin.Term (
+                0 => MCHammer_SMT_Builtin.Term (Free (s, T))
+              | _ => MCHammer_SMT_Builtin.Term (
                         (\<^Const>\<open>plus \<^Type>\<open>int\<close>\<close>) $ (Free (s, T)) $ (HOLogic.mk_number \<^typ>\<open>int\<close> n))) 
         fun transT n (T as TFree _) = Term.dest_TFree T ||> (fn (_) => \<^typ>\<open>int\<close>) |> conv n
           | transT _ (T as Type _) = raise TYPE ("Can we have typ of sort Type as type arg?", [T], [])
@@ -68,9 +68,9 @@ fun float_Targs (Type (\<^type_name>\<open>IEEE_Single_NaN.floatSingleNaN\<close
         fun trans t n =
               (case is_numeral t of 
                 true => let val i = Word_Lib.dest_binT t  in
-                         Flatbelle_SMT_Builtin.Term (HOLogic.mk_number \<^typ>\<open>int\<close> (i+n)) end
+                         MCHammer_SMT_Builtin.Term (HOLogic.mk_number \<^typ>\<open>int\<close> (i+n)) end
               | _ => transT n t)
-      in
+     in
         SOME(trans e 0, trans f 1)
       end
   | float_Targs _ = NONE
@@ -86,7 +86,7 @@ fun is_valid_type (T as (Type (\<^type_name>\<open>IEEE_Single_NaN.floatSingleNa
 (*
   SMT-LIB logics are generally too restrictive for Isabelle's problems. "ALL" denotes the most
   general logic supported by the SMT solver, and is chosen if a rounding mode or supported
-  floating-point type is encountered among the terms. Isabelle's Flatbelle_SMTLIB_Interface unfortunately
+  floating-point type is encountered among the terms. Isabelle's MCHammer_SMTLIB_Interface unfortunately
   does not provide a modular way to indicate that a problem requires the floating-point (FP) theory.
 *)
 fun smtlib_logic s _ ts =
@@ -129,7 +129,7 @@ local
                SMT solvers that support them (currently, cvc4 and z3). However, doing this in a
                modular way would require a change to the solver interface specifications (in
                isabelle/src/HOL/Tools/SMT/). *)
-      Flatbelle_SMT_Builtin.add_builtin_fun Flatbelle_SMTLIB_Interface.hosmtlibC (Term.dest_Const t, f n s)
+      MCHammer_SMT_Builtin.add_builtin_fun MCHammer_SMTLIB_Interface.hosmtlibC (Term.dest_Const t, f n s)
     end
 
   (*Customized interpretation. Check whether the type is supported, in SMTLIB 3 type arguments are
@@ -175,13 +175,13 @@ in
 val setup_builtins =
 
   (*Types*)
-  fold (Flatbelle_SMT_Builtin.add_builtin_typ Flatbelle_SMTLIB_Interface.hosmtlibC) [
+  fold (MCHammer_SMT_Builtin.add_builtin_typ MCHammer_SMTLIB_Interface.hosmtlibC) [
     (\<^typ>\<open>('a::len) Word.word\<close>, word_typ, K (K NONE)),
     (\<^typ>\<open>('e::len,'f::len) IEEE_Single_NaN.floatSingleNaN\<close>, float_typ, K (K NONE)),
     (\<^typ>\<open>IEEE.roundmode\<close>, K (SOME ("RoundingMode", [])), K (K NONE))] #>
 
   (*Rounding modes*)
-  fold (Flatbelle_SMT_Builtin.add_builtin_fun' Flatbelle_SMTLIB_Interface.hosmtlibC) [
+  fold (MCHammer_SMT_Builtin.add_builtin_fun' MCHammer_SMTLIB_Interface.hosmtlibC) [
     (@{const IEEE.roundNearestTiesToEven}, "RNE"),
     (@{const IEEE.roundTowardPositive}, "RTP"),
     (@{const IEEE.roundTowardNegative}, "RTN"),
@@ -245,8 +245,8 @@ end
 
 (*Override any other logic.*)
 val _ = Theory.setup (Context.theory_map (
-    Flatbelle_SMTLIB_Interface.add_logic (0, smtlib_logic "FloatingPoint") #>
-    Flatbelle_SMTLIB_Interface.add_logic (1, smtlib_logic "Reals" ) #>
+    MCHammer_SMTLIB_Interface.add_logic (0, smtlib_logic "FloatingPoint") #>
+    MCHammer_SMTLIB_Interface.add_logic (1, smtlib_logic "Reals" ) #>
     setup_builtins
   ))
 

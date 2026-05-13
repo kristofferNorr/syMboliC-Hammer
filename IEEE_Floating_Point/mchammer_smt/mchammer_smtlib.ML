@@ -4,7 +4,7 @@
 Parsing and generating SMT-LIB 3.
 *)
 
-signature FLATBELLE_SMTLIB =
+signature MCHAMMER_SMTLIB =
 sig
   exception PARSE of int * string
   datatype tree = 
@@ -19,7 +19,7 @@ sig
   val str_of: tree -> string
 end;
 
-structure Flatbelle_SMTLIB: FLATBELLE_SMTLIB =
+structure MCHammer_SMTLIB: MCHAMMER_SMTLIB =
 struct
 
 (* data structures *)

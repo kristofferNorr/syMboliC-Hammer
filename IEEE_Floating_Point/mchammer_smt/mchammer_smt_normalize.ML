@@ -4,17 +4,17 @@
 
 *)
 
-signature FLATBELLE_SMT_NORMALIZE =
+signature MCHAMMER_SMT_NORMALIZE =
 sig
   
   (** atomization **)
   val atomize_conv: Proof.context -> conv
 
-  val normalize: Proof.context -> (Flatbelle_SMT_Util.role * thm) list -> ((int * Flatbelle_SMT_Util.role) * thm) list   
+  val normalize: Proof.context -> (MCHammer_SMT_Util.role * thm) list -> ((int * MCHammer_SMT_Util.role) * thm) list   
 
 end;
 
-structure Flatbelle_SMT_Normalize : FLATBELLE_SMT_NORMALIZE =
+structure MCHammer_SMT_Normalize : MCHAMMER_SMT_NORMALIZE =
 struct
 
 
@@ -44,7 +44,7 @@ fun atomize_conv ctxt ct =
 
 
 (** trigger inference **)
-\<comment> \<open>TODO: add trigger inference; these are the quantifier triggers used in smt (:pattern) (I think).\<close>
+\<comment> \<open>TODO: add trigger inference; these are the quantifier triggers used in smt (:pattern) .\<close>
 
 
 fun normalize ctxt wthms =

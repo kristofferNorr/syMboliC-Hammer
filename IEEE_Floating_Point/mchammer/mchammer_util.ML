@@ -4,9 +4,9 @@
 
 *)
 
-signature FLATBELLE_UTIL =
+signature MCHAMMER_UTIL =
 sig
-  val flatbelleN : string
+  val mchammerN : string
   val log2 : real -> real
   val serial_commas : string -> string list -> string list
   val simplify_spaces: string -> string
@@ -17,13 +17,13 @@ sig
   exception TODO of string  
 end;
 
-structure Flatbelle_Util : FLATBELLE_UTIL =
+structure MCHammer_Util : MCHAMMER_UTIL =
 struct
 
 (* TODO exception*)
 exception TODO of string  
 
-val flatbelleN = "flatbelle"
+val mchammerN = "mchammer"
 
 val log10_2 = Math.log10 2.0
 fun log2 n = Math.log10 n / log10_2

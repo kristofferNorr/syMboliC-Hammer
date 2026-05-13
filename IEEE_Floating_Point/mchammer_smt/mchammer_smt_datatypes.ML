@@ -5,7 +5,7 @@ Collector functions for common type declarations and their representation
 as (co)algebraic datatypes.
 *)
 
-signature FLATBELLE_SMT_DATATYPES =
+signature MCHAMMER_SMT_DATATYPES =
 sig
   val get_decls: BNF_Util.fp_kind list -> typ -> string -> typ list -> Proof.context ->
     ((BNF_Util.fp_kind * (typ * (term * term list) list)) list * Proof.context)
@@ -14,10 +14,9 @@ sig
     (BNF_Util.fp_kind * (typ * (term * term list) list)) list list * Proof.context
 end;
 
-structure Flatbelle_SMT_Datatypes: FLATBELLE_SMT_DATATYPES =
+structure MCHammer_SMT_Datatypes: MCHAMMER_SMT_DATATYPES =
 struct
 
-\<comment> \<open>mk_selectors: typ -> typ list -> term list -> Proof.context -> (term list * Proof.context)\<close>
 fun mk_selectors T Ts sels = 
   if null sels then
     Variable.variant_fixes (replicate (length Ts) "select")
@@ -27,19 +26,15 @@ fun mk_selectors T Ts sels =
 
 (* free constructor type declarations *)
 
-\<comment> \<open>get_ctr_sugar_decl: Ctr_Sugar.ctr_sugar -> typ -> typ list -> Proof.context -> 
-    ((typ * (term * term list) list ) list * Proof.context)\<close>
 fun get_ctr_sugar_decl ({ctrs = ctrs0, selss = selss0,...}: Ctr_Sugar.ctr_sugar) T Ts ctxt =
   let 
     val selss = map (map (Ctr_Sugar.mk_disc_or_sel Ts)) selss0
     val ctrs = map (Ctr_Sugar.mk_ctr Ts) ctrs0
 
-    \<comment> \<open>mk_constr: term -> term list -> Proof.context -> ((term * term list) * Proof.context)\<close>
     fun mk_constr ctr sels = 
       mk_selectors T (binder_types (fastype_of ctr)) sels #>> pair ctr
 
     val selss' =
-      \<comment> \<open>If selectors are \<alpha>-equiv or a selector returns a function (HO)\<close>
       (* TODO: check smtlib 3 doc for details on allowed selectors. *)
       (if has_duplicates (op aconv) (flat selss) orelse
           exists (exists (can (dest_funT o range_type o fastype_of))) selss then [] 
@@ -52,7 +47,6 @@ fun get_ctr_sugar_decl ({ctrs = ctrs0, selss = selss0,...}: Ctr_Sugar.ctr_sugar)
 
 (* typedef declarations *)
 
-\<comment> \<open>get_typedef_decl: Typedef.info -> typ -> typ list -> (typ * (term * term list) list) list\<close>
 fun get_typedef_decl (({Abs_name, Rep_name, abs_type, rep_type,...}, {Abs_inverse,...})
     : Typedef.info) T Ts =
   if can (curry (op RS) @{thm UNIV_I}) Abs_inverse then
@@ -69,12 +63,9 @@ fun get_typedef_decl (({Abs_name, Rep_name, abs_type, rep_type,...}, {Abs_invers
 
 val extN = "_ext" (* No clue what this is for exactly. *)
 
-\<comment> \<open>get_decls: BNF_Util.fp_kind list -> typ -> string -> typ list -> Proof.context ->
-      ((BNF_Util.fp_kind * (typ * (term * term list) list)) list * Proof.context) \<close>
 fun get_decls fp_kinds T n Ts ctxt =
   let 
-    \<comment> \<open>maybe_typedef: unit ->
-          ((BNF_Util.fp_kind * (typ * (term * term list) list)) list * Proof.context)\<close>
+  
     fun maybe_typedef () = 
       (case Typedef.get_info ctxt n of
         [] => ([], ctxt)
@@ -136,7 +127,7 @@ fun add_decls fp_kinds T (declss, ctxt) =
       | add \<^typ>\<open>bool\<close> = I
       | add (T as Type (n, Ts)) = (fn (dss, ctxt1) =>
           if declared T declss orelse declared' T dss then (dss, ctxt1)
-          else if Flatbelle_SMT_Builtin.is_builtin_typ_ext ctxt1 T then (dss, ctxt1)
+          else if MCHammer_SMT_Builtin.is_builtin_typ_ext ctxt1 T then (dss, ctxt1)
           else
             (case get_decls fp_kinds T n Ts ctxt1 of
               ([], _) => (dss, ctxt1)

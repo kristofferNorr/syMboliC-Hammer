@@ -4,14 +4,14 @@
 
 *)
 
-signature FLATBELLE_SMT_BUILTIN =
+signature MCHAMMER_SMT_BUILTIN =
 sig
 
   (*typs and terms*)
   datatype typ_term = Typ of typ | Term of term 
   
   (*built-in types*)
-  val add_builtin_typ: Flatbelle_SMT_Util.class -> 
+  val add_builtin_typ: MCHammer_SMT_Util.class -> 
     typ * (typ -> (string * typ_term list) option) * (typ -> int -> string option) -> 
     Context.generic -> Context.generic
   val add_builtin_typ_ext: typ * (Proof.context -> typ -> bool) -> Context.generic ->
@@ -27,9 +27,9 @@ sig
   (*built-in functions*)
   type 'a bfun = Proof.context -> typ -> term list -> 'a
   type bfunr = string * int * term list * (term list -> term)
-  val add_builtin_fun: Flatbelle_SMT_Util.class -> (string * typ) * bfunr option bfun -> 
+  val add_builtin_fun: MCHammer_SMT_Util.class -> (string * typ) * bfunr option bfun -> 
     Context.generic -> Context.generic
-  val add_builtin_fun': Flatbelle_SMT_Util.class -> term * string -> Context.generic -> Context.generic
+  val add_builtin_fun': MCHammer_SMT_Util.class -> term * string -> Context.generic -> Context.generic
   val add_builtin_fun_ext: (string * typ) * term list bfun -> Context.generic -> Context.generic
   val add_builtin_fun_ext': string * typ -> Context.generic -> Context.generic
   val add_builtin_fun_ext'': string -> Context.generic -> Context.generic    
@@ -44,7 +44,7 @@ sig
 
 end;
 
-structure Flatbelle_SMT_Builtin: FLATBELLE_SMT_BUILTIN =
+structure MCHammer_SMT_Builtin: MCHAMMER_SMT_BUILTIN =
 struct
 
 (*typs and terms*)
@@ -55,7 +55,7 @@ datatype typ_term = Typ of typ | Term of term
 
 datatype ('a, 'b) kind = Ext of 'a | Int of 'b
 
-type ('a, 'b) ttab = ((typ * ('a, 'b) kind) Ord_List.T) Flatbelle_SMT_Util.dict
+type ('a, 'b) ttab = ((typ * ('a, 'b) kind) Ord_List.T) MCHammer_SMT_Util.dict
 
 fun typ_ord ((T, _), (U, _)) =
   let
@@ -68,16 +68,16 @@ fun typ_ord ((T, _), (U, _)) =
   in tord (T, U) end
 
 fun insert_ttab cs T f =
-  Flatbelle_SMT_Util.dict_map_default (cs, [])
+  MCHammer_SMT_Util.dict_map_default (cs, [])
     (Ord_List.insert typ_ord (perhaps (try Logic.varifyT_global) T, f))
 
-fun merge_ttab ttabp = Flatbelle_SMT_Util.dict_merge (Ord_List.merge typ_ord) ttabp
+fun merge_ttab ttabp = MCHammer_SMT_Util.dict_merge (Ord_List.merge typ_ord) ttabp
 
 fun lookup_ttab ctxt ttab T = 
   let fun match (U, _) = Sign.typ_instance (Proof_Context.theory_of ctxt) (T, U)
   in
     get_first (find_first match) 
-      (Flatbelle_SMT_Util.dict_lookup ttab (Flatbelle_SMT_Config.solver_class_of ctxt))
+      (MCHammer_SMT_Util.dict_lookup ttab (MCHammer_SMT_Config.solver_class_of ctxt))
   end
 
 (*[A table where keys are Const-names and values ttabs]*)
@@ -99,7 +99,6 @@ type bfunr = string * int * term list * (term list -> term)
 
 structure Builtins = Generic_Data
 (
-  (*[T is a pair, one handling types (ttab), and one consts (btab).]*)
   type T = 
     (Proof.context -> typ -> bool, (*[This is ext part of ttab]*)
       (typ -> (string * typ_term list) option) * (typ -> int -> string option)) ttab * (*[This is int part of ttab]*)  
@@ -117,7 +116,7 @@ structure Builtins = Generic_Data
 fun add_builtin_typ cs (T, f, g) = 
   Builtins.map (apfst (insert_ttab cs T (Int (f, g))))
 
-fun add_builtin_typ_ext (T, f) = error "TODO: add_builtin_typ_ext" \<comment> \<open>Is not used here as IEEE is defined in Isabelle.\<close>
+fun add_builtin_typ_ext (T, f) = error "TODO: add_builtin_typ_ext" (* TODO: implement it *)
 
 fun lookup_builtin_typ ctxt =
   lookup_ttab ctxt (fst (Builtins.get (Context.Proof ctxt)))
@@ -161,7 +160,7 @@ fun add_builtin_fun' cs (t, n) =
   in add_builtin_fun cs (c, bfun)  end
 
 fun add_builtin_fun_ext ((n, T), f) = 
-  Builtins.map (apsnd (insert_btab Flatbelle_SMT_Util.basicC n T (Ext f)))
+  Builtins.map (apsnd (insert_btab MCHammer_SMT_Util.basicC n T (Ext f)))
 
 fun add_builtin_fun_ext' c = error "TODO: add_builtin_fun_ext'"
 

@@ -5,7 +5,7 @@ Basically a copy paste from og file, turned out I needed all and could not
 filter out anything.
 *)
 
-signature FLATBELLE_FACT =
+signature MCHAMMER_FACT =
 sig
   type status = ATP_Problem_Generate.status
   type stature = ATP_Problem_Generate.stature
@@ -27,7 +27,7 @@ sig
     term list -> term -> lazy_fact list
 end;
 
-structure Flatbelle_Fact : FLATBELLE_FACT =
+structure MCHammer_Fact : MCHAMMER_FACT =
 struct
 
 exception TODO of string
@@ -84,7 +84,7 @@ val may_be_induction =
     (fn Var (_, Type (\<^type_name>\<open>fun\<close>, [_, T])) => body_type T = \<^typ>\<open>bool\<close>
     | _ => false)
 
-(* (copied from OG file) TODO: get rid of *)
+(* (copied from og file) TODO: get rid of *)
 fun normalize_vars t = t
 
 fun status_of_thm css name th = 
@@ -125,7 +125,7 @@ fun fact_of_ref ctxt keywords chained css (xthm as (xref, args)) =
 
     fun nth_name j =
       (case xref of
-        Facts.Fact s => cartouche (Flatbelle_Util.simplify_spaces (Protocol_Message.clean_output s)) ^ bracket
+        Facts.Fact s => cartouche (MCHammer_Util.simplify_spaces (Protocol_Message.clean_output s)) ^ bracket
       | Facts.Named (("", _), _) => "[" ^ bracket ^ "]"
       | Facts.Named ((name, _), NONE) => make_name keywords (length ths > 1) (j+1) name ^ bracket
       | Facts.Named ((name, _), SOME intervals) => make_name keywords true
@@ -137,7 +137,7 @@ fun fact_of_ref ctxt keywords chained css (xthm as (xref, args)) =
     (0, []) |> fold add_nth ths |> snd
   end
 
-(* (copied from OG file) Reject theorems with names like "List.filter.filter_list_def" or "Accessible_Part.acc.defs", as
+(* (copied from og file) Reject theorems with names like "List.filter.filter_list_def" or "Accessible_Part.acc.defs", as
    these are definitions arising from packages. *)
 fun is_package_def s =
   exists (fn suf => String.isSuffix suf s)
@@ -147,14 +147,14 @@ fun is_package_def s =
     length ss > 2 andalso not (hd ss = "local")
   end
 
-(* (copied from OG file) FIXME: put other record thms here, or declare as "no_atp" *)
+(* (copied from og file) FIXME: put other record thms here, or declare as "no_atp" *)
 val multi_base_blacklist =
   ["defs", "select_defs", "update_defs", "split", "splits", "split_asm", "ext_cases", "eq.simps",
    "eq.refl", "nchotomy", "case_cong", "case_cong_weak", "nat_of_char_simps", "nibble.simps",
    "nibble.distinct"]
   |> map (prefix Long_Name.separator)
 
-(* (copied from OG file) The maximum apply depth of any "metis" call in "Metis_Examples" (back in 2007) was 11. *)
+(* (copied from og file) The maximum apply depth of any "metis" call in "Metis_Examples" (back in 2007) was 11. *)
 val max_apply_depth = 18
 
 fun apply_depth (f $ t) = Int.max (apply_depth f, apply_depth t + 1)
@@ -163,7 +163,7 @@ fun apply_depth (f $ t) = Int.max (apply_depth f, apply_depth t + 1)
 
 fun is_too_complex t = apply_depth t > max_apply_depth
 
-(* (copied from OG file) FIXME: Ad hoc list *)
+(* (copied from og file) FIXME: Ad hoc list *)
 val technical_prefixes =
   ["ATP", "Sledgehammer", "SMT"]
   |> map (suffix Long_Name.separator)
@@ -232,7 +232,7 @@ val is_blacklisted_or_something =
     fn name => is_package_def name orelse exists (fn s => String.isSuffix s name) blist
   end
 
-(* (copied from OG file) This is a terrible hack. Free variables are sometimes coded as "M__" when
+(* (copied from og file) This is a terrible hack. Free variables are sometimes coded as "M__" when
    they are displayed as "M" and we want to avoid clashes with these. But
    sometimes it's even worse: "Ma__" encodes "M". So we simply reserve all
    prefixes of all free variables. In the worse case scenario, where the fact
@@ -255,7 +255,7 @@ fun close_form t =
   |> fst
   end
 
-fun cartouche_term ctxt = close_form #> Flatbelle_Util.hackish_string_of_term ctxt #> cartouche
+fun cartouche_term ctxt = close_form #> MCHammer_Util.hackish_string_of_term ctxt #> cartouche
 fun cartouche_thm ctxt = cartouche_term ctxt o Thm.prop_of
 
 fun clasimpset_rule_table_of ctxt =
@@ -271,7 +271,7 @@ fun clasimpset_rule_table_of ctxt =
             kind = Bires.intro_bang_kind orelse kind = Bires.intro_kind)
           |> map fst
         
-(* (copied from OG file) Add once it is used:
+(* (copied from og file) Add once it is used:
         val elims =
           (claset_rules Bires.elim_bang_kind @ claset_rules Bires.elim_kind)
           |> map (Classical.classical_rule ctxt);
@@ -290,7 +290,7 @@ fun clasimpset_rule_table_of ctxt =
         |> fold (add ATP_Problem_Generate.Simp o snd) simps
         |> fold (add ATP_Problem_Generate.Rec_Def) rec_defs
         |> fold (add ATP_Problem_Generate.Non_Rec_Def) nonrec_defs
-(* (copied from OG file) Add once it is used:
+(* (copied from og file) Add once it is used:
         |> fold (add Elim) elims
 *)        
         |> fold (add ATP_Problem_Generate.Intro) intros
@@ -309,7 +309,7 @@ fun normalize_eq (\<^Const_>\<open>Trueprop\<close> $ (t as (t0 as Const (\<^con
   | normalize_eq t = t
 
 
-(* add more stuff from OG if needed *)
+(* add more stuff from og if needed *)
 
 
 
@@ -335,7 +335,7 @@ fun instantiate_induct_rule ctxt concl_prop p_name ((name, stature), th) ind_x =
       |> map_aterms varify_noninducts
       |> close_form
       |> lambda (Free ind_x)
-      |> Flatbelle_Util.hackish_string_of_term ctxt
+      |> MCHammer_Util.hackish_string_of_term ctxt
   in
     ((fn () => name () ^ "[where " ^ p_name ^ " = " ^ quote p_inst ^ "]", stature),
       th |> Rule_Insts.read_instantiate ctxt [(((p_name, 0), Position.none), p_inst)] [])

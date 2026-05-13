@@ -1,7 +1,7 @@
 (*  Title:      
     Author:     Kristoffer Norrman
 
-Flatbelle tools for Isar proof reconstruction.
+MCHammer tools for Isar proof reconstruction.
 *)
 
 fun print_goal ctxt =

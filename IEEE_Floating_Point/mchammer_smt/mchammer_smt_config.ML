@@ -4,20 +4,20 @@
 
 *)
 
-signature FLATBELLE_SMT_CONFIG =
+signature MCHAMMER_SMT_CONFIG =
 sig
   (* solver *)
   type solver_info = {
     name: string,
     dummy: bool,
-    flatbelle_default: bool,
-    class: Proof.context -> Flatbelle_SMT_Util.class,
+    mchammer_default: bool,
+    class: Proof.context -> MCHammer_SMT_Util.class,
     available: unit -> bool,
     options: Proof.context -> string list}
   val add_solver: solver_info -> Context.generic -> Context.generic
   val select_solver: string -> Context.generic -> Context.generic
   val solver_of: Proof.context -> string
-  val solver_class_of: Proof.context -> Flatbelle_SMT_Util.class
+  val solver_class_of: Proof.context -> MCHammer_SMT_Util.class
   val solver_options_of: Proof.context -> string list  
 
   (*options*)
@@ -26,7 +26,7 @@ sig
   val nat_as_int: bool Config.T
 end;
 
-structure Flatbelle_SMT_Config : FLATBELLE_SMT_CONFIG =
+structure MCHammer_SMT_Config : MCHAMMER_SMT_CONFIG =
 struct
 
 (* context data *)
@@ -34,8 +34,8 @@ struct
 type solver_info = {
   name: string,
   dummy: bool,
-  flatbelle_default: bool,
-  class: Proof.context -> Flatbelle_SMT_Util.class,
+  mchammer_default: bool,
+  class: Proof.context -> MCHammer_SMT_Util.class,
   available: unit -> bool,
   options: Proof.context -> string list};
 
@@ -85,8 +85,8 @@ fun solver_options_of ctxt =
 
 (* options *)
 
-val problem_dest_file = Attrib.setup_config_string \<^binding>\<open>flatbelle_problem_dest_dir\<close> (K "");
-val proof_dest_file = Attrib.setup_config_string \<^binding>\<open>flatbelle_proof_dest_dir\<close> (K "");
-val nat_as_int = Attrib.setup_config_bool \<^binding>\<open>flatbelle_nat_as_int\<close> (K false);
+val problem_dest_file = Attrib.setup_config_string \<^binding>\<open>mchammer_problem_dest_dir\<close> (K "");
+val proof_dest_file = Attrib.setup_config_string \<^binding>\<open>mchammer_proof_dest_dir\<close> (K "");
+val nat_as_int = Attrib.setup_config_bool \<^binding>\<open>mchammer_nat_as_int\<close> (K false);
   
 end;
